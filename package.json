@@ -1,0 +1,17 @@
+{
+  "name": "yunique-checkout",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Yuno Standard Flow integration — Yunique Fashion Store case study",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}

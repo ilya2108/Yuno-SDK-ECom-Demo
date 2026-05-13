@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YUNIQUE — Checkout</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <!-- Yuno Web SDK -->
+  <script src="https://sdk-web.y.uno/v1.5/main.js"></script>
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">YUNIQUE</div>
+    <nav><a href="/">← back to bag</a></nav>
+  </header>
+
+  <main class="container narrow">
+    <h1>Checkout</h1>
+    <div id="summary" class="summary"></div>
+
+    <h2>Payment</h2>
+    <div id="status" class="status" hidden></div>
+
+    <!-- SDK bootstraps from this element. In modal mode the actual form
+         renders as an overlay when yuno.startPayment() is called. -->
+    <div id="yuno-checkout"></div>
+
+    <button id="pay-btn" class="btn btn-primary" disabled>Continue to payment</button>
+  </main>
+
+  <script>
+    (async () => {
+      const setStatus = (msg, kind = 'info') => {
+        const el = document.getElementById('status');
+        el.hidden = false;
+        el.className = `status status-${kind}`;
+        el.textContent = msg;
+      };
+      const clearStatus = () => {
+        const el = document.getElementById('status');
+        el.hidden = true;
+        el.textContent = '';
+      };
+
+      let session;
+      let yuno;
+
+      async function loadCheckoutSession() {
+        const data = await fetch('/api/checkout-session', { method: 'POST' }).then(r => r.json());
+        if (data.error) throw new Error(data.error + ': ' + JSON.stringify(data.detail));
+        return data;
+      }
+
+      async function handlePaymentOutcome(status, paymentId) {
+        if (status === 'SUCCEEDED') {
+          window.location.href = `/success.html?id=${paymentId || ''}&status=${status}`;
+          return;
+        }
+        const human = (status || 'FAILED').toLowerCase().replace(/_/g, ' ');
+        setStatus(`Payment ${human}. Reloading checkout to try a different card…`, 'error');
+        // The Yuno SDK doesn't cleanly reopen its modal after a failed startPayment().
+        // Page reload gives us a fresh SDK instance + fresh checkout session — reliable for demo.
+        setTimeout(() => window.location.reload(), 2500);
+      }
+
+      try {
+        const [{ publicApiKey }, cart] = await Promise.all([
+          fetch('/api/config').then(r => r.json()),
+          fetch('/api/cart').then(r => r.json()),
+        ]);
+
+        const fmt = (cents, ccy) =>
+          new Intl.NumberFormat('en-EU', { style: 'currency', currency: ccy }).format(cents / 100);
+        document.getElementById('summary').innerHTML = `
+          <div>${cart.items.length} item(s) · ${cart.country}</div>
+          <strong>${fmt(cart.total, cart.currency)}</strong>
+        `;
+
+        session = await loadCheckoutSession();
+        yuno = await Yuno.initialize(publicApiKey);
+
+        // OFFICIAL QUICKSTART CONFIG — modal mode, SDK shows its own Pay button inside the modal.
+        // We don't override renderMode or showPayButton.
+        await yuno.startCheckout({
+          checkoutSession: session.checkoutSession,
+          elementSelector: '#yuno-checkout',
+          countryCode: session.country,
+          language: 'en',
+
+          async yunoCreatePayment(oneTimeToken) {
+            clearStatus();
+            setStatus('Processing payment…');
+
+            const result = await fetch('/api/payments', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                oneTimeToken,
+                checkoutSession: session.checkoutSession,
+                customerId: session.customerId,
+                merchantOrderId: session.merchantOrderId,
+                amount: session.amount,
+                currency: session.currency,
+                country: session.country,
+              }),
+            }).then(r => r.json());
+
+            if (result.error) {
+              setStatus('Payment failed: ' + JSON.stringify(result.detail) + ' — reloading…', 'error');
+              setTimeout(() => window.location.reload(), 2500);
+              return;
+            }
+
+            if (result.sdk_action_required) {
+              yuno.continuePayment();
+              return;
+            }
+
+            await handlePaymentOutcome(result.status, result.id);
+          },
+
+          async yunoPaymentResult(state) {
+            console.log('yunoPaymentResult', state);
+            await handlePaymentOutcome(state);
+          },
+
+          yunoError(err) {
+            console.error('yunoError', err);
+            setStatus('SDK error: ' + (err?.message || JSON.stringify(err)), 'error');
+          },
+        });
+
+        await yuno.mountCheckout();
+
+        // External button opens the SDK modal — straight from Yuno's quickstart docs.
+        const payBtn = document.getElementById('pay-btn');
+        payBtn.disabled = false;
+        payBtn.addEventListener('click', () => yuno.startPayment());
+      } catch (err) {
+        console.error(err);
+        setStatus('Setup error: ' + err.message, 'error');
+      }
+    })();
+  </script>
+</body>
+</html>

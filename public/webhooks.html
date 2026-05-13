@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YUNIQUE — Webhook log</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .wh-list { margin-top: 24px; }
+    .wh-empty {
+      padding: 64px 24px; text-align: center; color: var(--muted);
+      border: 1px dashed var(--line); font-size: 13px; letter-spacing: 0.05em;
+    }
+    .wh-event {
+      display: grid;
+      grid-template-columns: 110px 1fr 130px 100px;
+      gap: 20px; align-items: center;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .wh-time { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 11px; letter-spacing: 0.05em; }
+    .wh-type { font-family: ui-monospace, "SF Mono", monospace; font-size: 12px; }
+    .wh-pid  { font-family: ui-monospace, "SF Mono", monospace; font-size: 11px; color: var(--muted); }
+    .wh-status {
+      display: inline-block; padding: 4px 10px; font-size: 10px;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      border: 1px solid var(--muted); color: var(--muted);
+    }
+    .wh-status.ok   { border-color: var(--ok);  color: var(--ok); }
+    .wh-status.err  { border-color: var(--err); color: var(--err); }
+    .wh-status.pending { border-color: #d4a857; color: #d4a857; }
+    .wh-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 24px;
+    }
+    .wh-pulse {
+      display: inline-flex; align-items: center; gap: 8px;
+      color: var(--muted); font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .wh-pulse::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--ok); animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    details.wh-raw {
+      grid-column: 1 / -1; margin-top: 8px;
+    }
+    details.wh-raw summary {
+      cursor: pointer; color: var(--muted); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    details.wh-raw pre {
+      margin-top: 8px; padding: 12px; background: var(--surface, #f5f5f0); border: 1px solid var(--line);
+      font-size: 11px; overflow-x: auto; color: var(--fg);
+      max-height: 200px;
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">YUNIQUE</div>
+    <nav><a href="/">← back to store</a> · WEBHOOK LOG</nav>
+  </header>
+
+  <main class="container">
+    <div class="wh-head">
+      <h1 style="margin: 0;">Webhook Events</h1>
+      <span class="wh-pulse">Polling every 2s</span>
+    </div>
+
+    <div id="wh-list" class="wh-list">
+      <div class="wh-empty">No events yet. Make a payment to see Yuno webhooks arrive in real time.</div>
+    </div>
+  </main>
+
+  <script>
+    const STATUS_CLASS = {
+      SUCCEEDED: 'ok',
+      AUTHORIZED: 'ok',
+      CAPTURED: 'ok',
+      REFUNDED: 'ok',
+      DECLINED: 'err',
+      FAILED: 'err',
+      REJECTED: 'err',
+      CANCELED: 'err',
+      CREATED: 'pending',
+      PROCESSING: 'pending',
+      READY_TO_PAY: 'pending',
+      VERIFIED: 'pending',
+    };
+
+    function fmtTime(iso) {
+      const d = new Date(iso);
+      return d.toLocaleTimeString('en-GB', { hour12: false }) + '.' +
+             String(d.getMilliseconds()).padStart(3, '0');
+    }
+
+    function renderEvent({ received_at, event }) {
+      const payment = event?.data?.payment || {};
+      const type = event?.type_event || event?.type || 'unknown';
+      const status = payment.status || '—';
+      const statusCls = STATUS_CLASS[status] || '';
+      const pid = payment.id ? payment.id.slice(0, 8) : '—';
+      const raw = JSON.stringify(event, null, 2);
+
+      return `
+        <article class="wh-event">
+          <div class="wh-time">${fmtTime(received_at)}</div>
+          <div class="wh-type">${type}</div>
+          <div class="wh-pid">${pid}</div>
+          <div><span class="wh-status ${statusCls}">${status}</span></div>
+          <details class="wh-raw">
+            <summary>raw payload</summary>
+            <pre>${raw.replace(/</g, '&lt;')}</pre>
+          </details>
+        </article>
+      `;
+    }
+
+    let lastSig = '';
+    async function poll() {
+      try {
+        const { events } = await fetch('/api/webhook-log').then(r => r.json());
+        const sig = events.map(e => e.received_at).join('|');
+        if (sig === lastSig) return;       // no change, skip rerender
+        lastSig = sig;
+
+        const root = document.getElementById('wh-list');
+        if (!events.length) {
+          root.innerHTML = `<div class="wh-empty">No events yet. Make a payment to see Yuno webhooks arrive in real time.</div>`;
+          return;
+        }
+        root.innerHTML = events.map(renderEvent).join('');
+      } catch (e) {
+        console.error('poll error', e);
+      }
+    }
+
+    poll();
+    setInterval(poll, 2000);
+  </script>
+</body>
+</html>

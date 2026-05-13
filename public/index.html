@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YUNIQUE — Cart</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="nav">
+    <div class="brand">YUNIQUE</div>
+    <nav>WOMEN · MEN · ARCHIVE</nav>
+  </header>
+
+  <main class="container">
+    <h1>Your bag</h1>
+    <section id="cart" class="cart"></section>
+
+    <div class="cart-footer">
+      <div class="total">
+        <span>Total</span>
+        <strong id="total">—</strong>
+      </div>
+      <a class="btn btn-primary" href="/checkout.html">Proceed to checkout →</a>
+    </div>
+  </main>
+
+  <script>
+    (async () => {
+      const cart = await fetch('/api/cart').then(r => r.json());
+      const fmt = (cents, ccy) =>
+        new Intl.NumberFormat('en-EU', { style: 'currency', currency: ccy }).format(cents / 100);
+
+      document.getElementById('cart').innerHTML = cart.items.map(i => `
+        <article class="line">
+          <div>
+            <div class="sku">${i.sku}</div>
+            <div class="name">${i.name}</div>
+          </div>
+          <div class="price">${fmt(i.price, cart.currency)}</div>
+        </article>
+      `).join('');
+
+      document.getElementById('total').textContent = fmt(cart.total, cart.currency);
+    })();
+  </script>
+</body>
+</html>

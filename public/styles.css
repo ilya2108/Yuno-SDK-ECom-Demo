@@ -1,0 +1,93 @@
+:root {
+  --bg: #fafaf7;          /* off-white, slightly warm — feels editorial not clinical */
+  --fg: #0a0a0a;
+  --muted: #8a8a8a;
+  --line: #e5e3de;        /* warm light border */
+  --accent: #0a0a0a;
+  --accent-fg: #fafaf7;
+  --err: #c2362b;         /* darker red, readable on light bg */
+  --ok: #2e7d4f;          /* deeper green */
+  --surface: #ffffff;     /* slightly brighter cards inside the warm bg */
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+}
+
+a { color: var(--fg); text-decoration: none; }
+a:hover { opacity: 0.6; }
+
+.nav {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 24px 48px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+}
+.brand { font-weight: 600; letter-spacing: 0.3em; }
+
+.container { max-width: 960px; margin: 0 auto; padding: 64px 48px; }
+.container.narrow { max-width: 560px; }
+.container.center { text-align: center; }
+
+h1 { font-weight: 300; font-size: 32px; letter-spacing: 0.05em; text-transform: uppercase; margin: 0 0 32px; }
+h2 { font-weight: 400; font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; margin: 40px 0 16px; color: var(--muted); }
+
+.cart .line {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 24px 0; border-bottom: 1px solid var(--line);
+}
+.sku { font-size: 11px; color: var(--muted); letter-spacing: 0.15em; }
+.name { font-size: 16px; margin-top: 4px; }
+.price { font-size: 16px; }
+
+.cart-footer {
+  margin-top: 32px; display: flex; justify-content: space-between; align-items: center;
+}
+.total { display: flex; gap: 24px; align-items: baseline; }
+.total span { color: var(--muted); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; }
+.total strong { font-size: 22px; font-weight: 400; }
+
+.summary {
+  display: flex; justify-content: space-between; padding: 16px 0;
+  border-bottom: 1px solid var(--line); margin-bottom: 24px;
+  color: var(--muted); font-size: 13px;
+}
+.summary strong { color: var(--fg); font-weight: 400; }
+
+/* Yuno SDK mount surface */
+.yuno-mount, #yuno-checkout {
+  margin-bottom: 12px;
+}
+.yuno-mount:empty {
+  display: none;
+}
+
+.btn {
+  display: inline-block; padding: 16px 32px;
+  border: 1px solid var(--fg); background: transparent; color: var(--fg);
+  font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase;
+  cursor: pointer; transition: 0.15s;
+  margin-top: 16px;
+}
+.btn:hover { background: var(--fg); color: var(--bg); }
+.btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.btn-primary { background: var(--fg); color: var(--bg); }
+.btn-primary:hover { opacity: 0.85; background: var(--fg); color: var(--bg); }
+
+.status {
+  padding: 12px 16px; margin-bottom: 16px;
+  font-size: 13px; letter-spacing: 0.05em;
+  border-left: 2px solid var(--muted);
+  background: var(--surface);
+}
+.status-error { border-color: var(--err); color: var(--err); }
+.status-info  { border-color: var(--muted); }
+
+.muted { color: var(--muted); }
