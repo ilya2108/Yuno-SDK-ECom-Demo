@@ -5,6 +5,7 @@ A working reference implementation of Yuno's Web SDK (Standard Flow) for an ente
 **Stack:** Node.js · Express · Vanilla JS · Yuno Web SDK v1.6 · Sandbox mode
 **Deploy:** Vercel serverless functions + static assets
 **Status:** Demo-ready · Sandbox only
+**URL:** https://yuno-sdk-ecom-demo.vercel.app
 
 ---
 
@@ -111,7 +112,7 @@ Before running locally, configure in [dashboard.y.uno](https://dashboard.y.uno):
 1. **Connections** → enable **Yuno Test Payment Gateway** (no credentials needed)
 2. **Routing** → create Card route, conditions: Country=ES (or your test country), provider: Yuno Test Payment Gateway → **Publish**
 3. **Checkout Builder** → toggle **Card** ON → **Publish**
-4. **Webhooks** → register endpoint: `https://<your-public-url>/api/webhooks/yuno`
+4. **Webhooks** → register endpoint: `https://yuno-sdk-ecom-demo.vercel.app/api/webhooks/yuno`
    - Enable HMAC signature
    - Add `x-api-key` and `x-secret` defense-in-depth headers
    - Subscribe to all Payment events
@@ -203,7 +204,7 @@ OTP codes are universal across Visa, Mastercard, and Amex scenarios.
 For demo purposes, here's the rehearsed flow against this implementation:
 
 ### 1. Happy path (2 min)
-1. Open `https://<your-url>/` — fashion cart loads
+1. Open `[Demo checkout](https://yuno-sdk-ecom-demo.vercel.app)` — fashion cart loads
 2. Click **Checkout** — Yuno modal opens
 3. Enter `4507 9900 0000 0002` / `11/28` / `123`, click **Pay**
 4. Success page renders
@@ -222,7 +223,7 @@ For demo purposes, here's the rehearsed flow against this implementation:
 4. Apple Pay button appears — zero code change, zero deploy
 
 ### 4. Webhook log (1 min)
-1. Open `https://<your-url>/webhooks.html`
+1. Open `https://yuno-sdk-ecom-demo.vercel.app/webhooks.html`
 2. Showcase the event stream: signed events arriving in real time
 3. Open the raw payload toggle to show HMAC signature verification
 
