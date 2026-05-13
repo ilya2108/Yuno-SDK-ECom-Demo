@@ -5,6 +5,8 @@ A working reference implementation of Yuno's Web SDK (Standard Flow) for an ente
 **Stack:** Node.js · Express · Vanilla JS · Yuno Web SDK v1.6 · Sandbox mode
 **Deploy:** Vercel serverless functions + static assets
 **Status:** Demo-ready · Sandbox only
+
+
 **URL:** https://yuno-sdk-ecom-demo.vercel.app
 
 ---
